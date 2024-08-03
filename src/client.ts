@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { ApiResponse, User } from './types';
+import { ApiResponse, PreEventDetails, User } from './types';
 
 /**
  * @class
@@ -7,13 +7,18 @@ import { ApiResponse, User } from './types';
  */
 export class Client {
     private httpClient: AxiosInstance;
+    private token: string;
 
     /**
      * Creates an instance of the Client.
      * @param {string} baseURL - The base URL of the API.
      */
-    constructor(baseURL: string) {
-        this.httpClient = axios.create({ baseURL });
+    constructor(baseURL: string, token: string) {
+        this.token = token;
+        this.httpClient = axios.create({
+            baseURL,
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
     }
 
     /**
@@ -41,5 +46,43 @@ export class Client {
             status: response.status,
             statusText: response.statusText
         };
+    }
+
+    /**
+     * Fetch pre event data using GraphQL.
+     * @param {number} eventId - The ID of the event.
+     * @returns {Promise<ApiResponse<PreEventDetails>>} The response containing the pre event details.
+     */
+    async getPreEventDetails(eventId: number): Promise<ApiResponse<PreEventDetails>> {
+        const query = `{
+            event(id: ${eventId}) {
+                title
+                eventType
+                description
+                dateTime
+                speakerDetails {
+                    name
+                }
+                host {
+                    name
+                }
+            }
+        }`;
+
+        const variables = {
+            eventId
+        };
+
+       try {
+            const response = await this.httpClient.post<{ data: PreEventDetails }>('/gql', { query, variables });
+            return {
+                data: response.data.data,
+                status: response.status,
+                statusText: response.statusText
+            };
+        } catch (error) {
+            console.error('Error fetching and storing event details:', error);
+            throw error;
+        }
     }
 }

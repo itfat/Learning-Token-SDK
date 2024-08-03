@@ -7,7 +7,7 @@ describe('Client', () => {
      * Initialize the client before all tests.
      */
     beforeAll(() => {
-        client = new Client('https://api.example.com');
+        client = new Client('https://api.example.com', 'test-token');
     });
 
     /**
